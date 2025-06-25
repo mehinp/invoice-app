@@ -26,6 +26,7 @@ public class InvoiceApplication {
         return new BCryptPasswordEncoder(STRENGTH);
     }
 
+    // allows frontend/backend connectivity
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
