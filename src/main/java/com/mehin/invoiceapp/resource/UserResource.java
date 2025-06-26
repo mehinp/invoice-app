@@ -12,11 +12,8 @@ import com.mehin.invoiceapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.http.auth.AUTH;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,6 +23,7 @@ import java.util.Map;
 
 import static com.mehin.invoiceapp.dtomapper.UserDTOMapper.toUser;
 import static com.mehin.invoiceapp.filter.CustomAuthorizationFilter.TOKEN_PREFIX;
+import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser;
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
@@ -66,7 +64,7 @@ public class UserResource {
 
     @GetMapping("/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication) {
-        UserDTO user = userService.getUserByEmail(authentication.getName());
+        UserDTO user = getAuthenticatedUser(authentication);
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())

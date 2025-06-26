@@ -12,7 +12,9 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.Arrays;
 import java.util.List;
 
-@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+import static java.util.Arrays.asList;
+
+@SpringBootApplication //(exclude = {SecurityAutoConfiguration.class})
 public class InvoiceApplication {
 
     private static final int STRENGTH = 12;
@@ -31,21 +33,21 @@ public class InvoiceApplication {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of(
+        config.setAllowedOrigins(asList(
                 "http://localhost:4200",
                 "http://localhost:3000",
                 "http://invoiceapp.org"
         ));
-        config.setAllowedHeaders(Arrays.asList(
+        config.setAllowedHeaders(asList(
                 "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
                 "Jwt-Token", "Authorization", "X-Requested-With", "Access-Control-Request-Method",
                 "Access-Control-Request-Headers"
         ));
-        config.setExposedHeaders(Arrays.asList(
+        config.setExposedHeaders(asList(
                 "Origin", "Content-Type", "Accept", "Authorization", "Jwt-Token",
                 "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "File-Name"
         ));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

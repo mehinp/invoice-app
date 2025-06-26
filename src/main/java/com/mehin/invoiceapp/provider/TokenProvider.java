@@ -9,6 +9,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.mehin.invoiceapp.domain.UserPrincipal;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import com.mehin.invoiceapp.service.UserService;
 
 import java.util.Date;
 import java.util.List;
@@ -26,6 +28,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
+@RequiredArgsConstructor
 @Component
 public class TokenProvider {
 
@@ -35,6 +38,7 @@ public class TokenProvider {
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
     @Value("${jwt.secret}")
     private String secret;
+    private final UserService userService;
 
     public String createAccessToken(UserPrincipal userPrincipal) {
         return JWT.create().withIssuer(MEHIN_APPLICATION).withAudience(CUSTOMER_MANAGEMENT_SERVICE)
@@ -72,7 +76,7 @@ public class TokenProvider {
     }
 
     public Authentication getAuthentication(String email, List<GrantedAuthority> authorities, HttpServletRequest request) {
-        UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(email, null, authorities);
+        UsernamePasswordAuthenticationToken userPasswordAuthToken = new UsernamePasswordAuthenticationToken(userService.getUserByEmail(email), null, authorities);
         userPasswordAuthToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return userPasswordAuthToken;
     }

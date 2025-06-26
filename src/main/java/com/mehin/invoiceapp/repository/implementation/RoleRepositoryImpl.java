@@ -58,7 +58,7 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
             Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, of("name", roleName), new RoleRowMapper());
             jdbc.update(INSERT_ROLE_TO_USER_QUERY, of("userId", userId, "roleId", requireNonNull(role).getId()));
 
-        } catch (EmptyResultDataAccessException exception) { throw new ApiException("No role found by name: " + ROLE_USER.name());
+        } catch (EmptyResultDataAccessException exception) { throw new ApiException("No role found by name: " + roleName);
 
         } catch (Exception exception) { throw new ApiException("An error occurred. Please try again.");
 
@@ -70,12 +70,12 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
 
         @Override
     public Role getRoleByUserId(Long userId) {
-            log.info("Adding role for user id: {}", userId);
+            log.info("Fetching role with user id {}", userId);
 
             try {
                 return jdbc.queryForObject(SELECT_ROLE_BY_ID_QUERY, of("id", userId), new RoleRowMapper());
 
-            } catch (EmptyResultDataAccessException exception) { throw new ApiException("No role found by name: " + ROLE_USER.name());
+            } catch (EmptyResultDataAccessException exception) { throw new ApiException("User with id " + userId + " not found with a role.");
 
             } catch (Exception exception) {
                 log.error(exception.getMessage());
