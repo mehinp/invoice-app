@@ -6,6 +6,7 @@ import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
 import com.mehin.invoiceapp.form.LoginForm;
+import com.mehin.invoiceapp.form.UpdateForm;
 import com.mehin.invoiceapp.provider.TokenProvider;
 import com.mehin.invoiceapp.service.RoleService;
 import com.mehin.invoiceapp.service.UserService;
@@ -70,6 +71,20 @@ public class UserResource {
                         .timeStamp(now().toString())
                         .data(Map.of("user", user))
                         .message("Profile retrieved.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user) {
+        UserDTO updatedUser = userService.updateUserDetails(user);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(Map.of("user", updatedUser))
+                        .message("User updated.")
                         .status(OK)
                         .statusCode(OK.value())
                         .build()

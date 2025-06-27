@@ -2,6 +2,8 @@ package com.mehin.invoiceapp.service;
 
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.dto.UserDTO;
+import com.mehin.invoiceapp.form.UpdateForm;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
 public interface UserService {
@@ -18,4 +20,6 @@ public interface UserService {
     void renewPassword(String key, String newPassword, String confirmPassword);
 
     UserDTO verifyAccountKey(String key);
+
+    UserDTO updateUserDetails(@Valid UpdateForm user);
 }

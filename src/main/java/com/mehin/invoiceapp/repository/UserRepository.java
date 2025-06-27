@@ -2,6 +2,7 @@ package com.mehin.invoiceapp.repository;
 
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.dto.UserDTO;
+import com.mehin.invoiceapp.form.UpdateForm;
 
 import java.util.Collection;
 
@@ -23,4 +24,6 @@ public interface UserRepository <T extends User> {
     void renewPassword(String key, String newPassword, String confirmPassword);
 
     T verifyAccountKey(String key);
+
+    T updateUserDetails(UpdateForm user);
 }

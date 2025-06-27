@@ -4,6 +4,7 @@ import com.mehin.invoiceapp.domain.Role;
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.dto.UserDTO;
 import com.mehin.invoiceapp.dtomapper.UserDTOMapper;
+import com.mehin.invoiceapp.form.UpdateForm;
 import com.mehin.invoiceapp.repository.RoleRepository;
 import com.mehin.invoiceapp.repository.UserRepository;
 import com.mehin.invoiceapp.service.UserService;
@@ -49,6 +50,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO verifyAccountKey(String key) {
         return mapToUserDTO(userRepository.verifyAccountKey(key));
+    }
+
+    @Override
+    public UserDTO updateUserDetails(UpdateForm user) {
+        return mapToUserDTO(userRepository.updateUserDetails(user));
     }
 
 
