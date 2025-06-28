@@ -22,4 +22,6 @@ public interface UserService {
     UserDTO verifyAccountKey(String key);
 
     UserDTO updateUserDetails(@Valid UpdateForm user);
+
+    UserDTO getUserById(Long userId);
 }

@@ -47,7 +47,7 @@ public class InvoiceApplication {
                 "Origin", "Content-Type", "Accept", "Authorization", "Jwt-Token",
                 "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "File-Name"
         ));
-        config.setAllowedMethods(asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
