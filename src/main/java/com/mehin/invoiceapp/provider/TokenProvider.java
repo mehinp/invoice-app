@@ -35,8 +35,8 @@ public class TokenProvider {
 
     private static final String MEHIN_APPLICATION = "MEHIN_APPLICATION";
     private static final String CUSTOMER_MANAGEMENT_SERVICE = "CUSTOMER_MANAGEMENT_SERVICE";
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 432_000_000;
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME =  864_000_000; //432_000_000;
     @Value("${jwt.secret}")
     private String secret;
     private final UserService userService;
@@ -62,13 +62,14 @@ public class TokenProvider {
             return Long.valueOf(getJWTVerifier().verify(token).getSubject());
         } catch (TokenExpiredException exception) {
             request.setAttribute("expiredMessage", exception.getMessage());
+            throw exception;
         } catch (InvalidClaimException exception) {
             request.setAttribute("invalidClaim", exception.getMessage());
+            throw exception;
         } catch (Exception exception) {
             throw exception;
         }
 
-        return null;
     }
 
     public List<GrantedAuthority> getAuthorities(String token) {

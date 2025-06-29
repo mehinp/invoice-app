@@ -7,6 +7,7 @@ import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
 import com.mehin.invoiceapp.form.LoginForm;
 import com.mehin.invoiceapp.form.UpdateForm;
+import com.mehin.invoiceapp.form.UpdatePasswordForm;
 import com.mehin.invoiceapp.provider.TokenProvider;
 import com.mehin.invoiceapp.service.RoleService;
 import com.mehin.invoiceapp.service.UserService;
@@ -139,7 +140,7 @@ public class UserResource {
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .message("Password reset successful.")
+                        .message("Password reset successfully.")
                         .status(OK)
                         .statusCode(OK.value())
                         .build()
@@ -148,6 +149,20 @@ public class UserResource {
 
     // (END) Reset password when user is not logged in
 
+
+    @PatchMapping("/update/password")
+    public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updatePassword(userDTO.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message("Password updated successfully.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
 
     @GetMapping("/verify/account/{key}")
     public ResponseEntity<HttpResponse> verifyAccount(@PathVariable ("key") String key) {
