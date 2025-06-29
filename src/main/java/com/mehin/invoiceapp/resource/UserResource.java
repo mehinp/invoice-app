@@ -70,7 +70,7 @@ public class UserResource {
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(Map.of("user", user))
+                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
                         .message("Profile retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -164,8 +164,25 @@ public class UserResource {
         );
     }
 
+    @PatchMapping("/update/role/{roleName}")
+    public ResponseEntity<HttpResponse> updateUserRole(Authentication authentication, @PathVariable("roleName") String roleName) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updateUserRole(userDTO.getId(), roleName);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .message("User role updated successfully.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+
+
     @GetMapping("/verify/account/{key}")
-    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable ("key") String key) {
+    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable ("roleName") String key) {
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
