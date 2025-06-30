@@ -5,7 +5,6 @@ import com.mehin.invoiceapp.domain.HttpResponse;
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
-import com.mehin.invoiceapp.enumeration.EventType;
 import com.mehin.invoiceapp.event.NewUserEvent;
 import com.mehin.invoiceapp.exception.ApiException;
 import com.mehin.invoiceapp.form.LoginForm;
@@ -13,6 +12,8 @@ import com.mehin.invoiceapp.form.SettingsForm;
 import com.mehin.invoiceapp.form.UpdateForm;
 import com.mehin.invoiceapp.form.UpdatePasswordForm;
 import com.mehin.invoiceapp.provider.TokenProvider;
+import com.mehin.invoiceapp.repository.UserRepository;
+import com.mehin.invoiceapp.service.EventService;
 import com.mehin.invoiceapp.service.RoleService;
 import com.mehin.invoiceapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +22,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -38,7 +38,7 @@ import static com.mehin.invoiceapp.dtomapper.UserDTOMapper.toUser;
 import static com.mehin.invoiceapp.filter.CustomAuthorizationFilter.TOKEN_PREFIX;
 import static com.mehin.invoiceapp.utils.ExceptionUtils.processError;
 import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser;
-import static com.mehin.invoiceapp.utils.UserUtils.getLoggedInUser;
+import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser1;
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
@@ -59,6 +59,8 @@ public class UserResource {
     private final ApplicationEventPublisher publisher;
     private final HttpServletRequest request;
     private final HttpServletResponse response;
+    private final UserRepository userRepository;
+    private final EventService eventService;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
@@ -86,7 +88,7 @@ public class UserResource {
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(Map.of("user", user, "roles", roleService.getAllRoles()))
+                        .data(Map.of("user", user, "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(user.getId())))
                         .message("Profile retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -97,10 +99,11 @@ public class UserResource {
     @PatchMapping("/update")
     public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user) {
         UserDTO updatedUser = userService.updateUserDetails(user);
+        publisher.publishEvent(new NewUserEvent(updatedUser.getEmail(), PROFILE_UPDATE));
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(Map.of("user", updatedUser))
+                        .data(Map.of("user", updatedUser, "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(updatedUser.getId())))
                         .message("User updated.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -168,11 +171,13 @@ public class UserResource {
 
     @PatchMapping("/update/password")
     public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
-        UserDTO userDTO = getAuthenticatedUser(authentication);
-        userService.updatePassword(userDTO.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updatePassword(user.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        publisher.publishEvent(new NewUserEvent(user.getEmail(), PASSWORD_UPDATE));
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
+                        .data(Map.of("user", user, "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(user.getId())))
                         .message("Password updated successfully.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -184,9 +189,10 @@ public class UserResource {
     public ResponseEntity<HttpResponse> updateUserRole(Authentication authentication, @PathVariable("roleName") String roleName) {
         UserDTO userDTO = getAuthenticatedUser(authentication);
         userService.updateUserRole(userDTO.getId(), roleName);
+        publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), ROLE_UPDATE));
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
-                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles()))
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(userDTO.getId())))
                         .timeStamp(now().toString())
                         .message("User role updated successfully.")
                         .status(OK)
@@ -199,9 +205,10 @@ public class UserResource {
     public ResponseEntity<HttpResponse> updateAccountSettings(Authentication authentication, @RequestBody @Valid SettingsForm form) {
         UserDTO userDTO = getAuthenticatedUser(authentication);
         userService.updateAccountSettings(userDTO.getId(), form.getEnabled(), form.getNotLocked());
+        publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), ACCOUNT_SETTINGS_UPDATE));
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
-                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles()))
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(userDTO.getId())))
                         .timeStamp(now().toString())
                         .message("Account settings updated successfully.")
                         .status(OK)
@@ -212,11 +219,12 @@ public class UserResource {
 
     @PatchMapping("/update/image")
     public ResponseEntity<HttpResponse> updateProfileImage(Authentication authentication, @RequestParam("image") MultipartFile image) throws InterruptedException {
-        UserDTO user = getAuthenticatedUser(authentication);
-        userService.updateImage(user, image);
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updateImage(userDTO, image);
+        publisher.publishEvent(new NewUserEvent(userDTO.getEmail(), PROFILE_PICTURE_UPDATE));
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
-                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles(), "events", eventService.getEventsByUserId(userDTO.getId())))
                         .timeStamp(now().toString())
                         .message("Profile image updated successfully.")
                         .status(OK)
