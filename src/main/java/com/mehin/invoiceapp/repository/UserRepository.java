@@ -3,6 +3,7 @@ package com.mehin.invoiceapp.repository;
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.dto.UserDTO;
 import com.mehin.invoiceapp.form.UpdateForm;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 
@@ -29,4 +30,7 @@ public interface UserRepository <T extends User> {
 
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
 
+    void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked);
+
+    void updateImage(UserDTO user, MultipartFile image);
 }

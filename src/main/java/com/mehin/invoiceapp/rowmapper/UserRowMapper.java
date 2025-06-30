@@ -1,13 +1,14 @@
 package com.mehin.invoiceapp.rowmapper;
 
-import com.mehin.invoiceapp.domain.Role;
 import com.mehin.invoiceapp.domain.User;
+import com.mehin.invoiceapp.domain.UserEvent;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class UserRowMapper implements RowMapper<User> {
+
     @Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
         return User.builder()
@@ -27,6 +28,5 @@ public class UserRowMapper implements RowMapper<User> {
                 .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
                 .build();
 
-
-    }
+    };
 }

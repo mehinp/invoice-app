@@ -5,50 +5,66 @@ import com.mehin.invoiceapp.domain.HttpResponse;
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
+import com.mehin.invoiceapp.enumeration.EventType;
+import com.mehin.invoiceapp.event.NewUserEvent;
+import com.mehin.invoiceapp.exception.ApiException;
 import com.mehin.invoiceapp.form.LoginForm;
+import com.mehin.invoiceapp.form.SettingsForm;
 import com.mehin.invoiceapp.form.UpdateForm;
 import com.mehin.invoiceapp.form.UpdatePasswordForm;
 import com.mehin.invoiceapp.provider.TokenProvider;
 import com.mehin.invoiceapp.service.RoleService;
 import com.mehin.invoiceapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import static com.mehin.invoiceapp.dtomapper.UserDTOMapper.toUser;
 import static com.mehin.invoiceapp.filter.CustomAuthorizationFilter.TOKEN_PREFIX;
+import static com.mehin.invoiceapp.utils.ExceptionUtils.processError;
 import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser;
+import static com.mehin.invoiceapp.utils.UserUtils.getLoggedInUser;
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
+import static com.mehin.invoiceapp.enumeration.EventType.*;
 
 
 @RestController
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
+@Slf4j
 public class UserResource {
     private final UserService userService;
     private final RoleService roleService;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
+    private final ApplicationEventPublisher publisher;
+    private final HttpServletRequest request;
+    private final HttpServletResponse response;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-        authenticationManager.authenticate(unauthenticated(loginForm.getEmail(), loginForm.getPassword()));
-        UserDTO user = userService.getUserByEmail(loginForm.getEmail());
+        UserDTO user = authenticate(loginForm.getEmail(), loginForm.getPassword());
         return user.isUsingMfa() ? sendVerificationCode(user) :  sendResponse (user);
     }
-
-
 
     @PostMapping("/register")
     public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user) {
@@ -179,6 +195,42 @@ public class UserResource {
         );
     }
 
+    @PatchMapping("/update/settings")
+    public ResponseEntity<HttpResponse> updateAccountSettings(Authentication authentication, @RequestBody @Valid SettingsForm form) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updateAccountSettings(userDTO.getId(), form.getEnabled(), form.getNotLocked());
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .data(Map.of("user", userService.getUserById(userDTO.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .message("Account settings updated successfully.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @PatchMapping("/update/image")
+    public ResponseEntity<HttpResponse> updateProfileImage(Authentication authentication, @RequestParam("image") MultipartFile image) throws InterruptedException {
+        UserDTO user = getAuthenticatedUser(authentication);
+        userService.updateImage(user, image);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .data(Map.of("user", userService.getUserById(user.getId()), "roles", roleService.getAllRoles()))
+                        .timeStamp(now().toString())
+                        .message("Profile image updated successfully.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+    @GetMapping(value="/image/{fileName}" , produces = IMAGE_PNG_VALUE)
+    public byte[] getProfileImage(@PathVariable("fileName") String fileName) throws Exception {
+        return Files.readAllBytes(Paths.get(System.getProperty("user.home") + "/Downloads/images/" + fileName));
+    }
+
+
 
 
     @GetMapping("/verify/account/{key}")
@@ -259,5 +311,23 @@ public class UserResource {
                         .statusCode(OK.value())
                         .build());
 
+    }
+
+    private UserDTO authenticate(String email, String password) {
+        try {
+            if (userService.getUserByEmail(email) != null) {
+                publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT));
+            }
+            authenticationManager.authenticate(unauthenticated(email, password));
+            UserDTO loggedInUser = userService.getUserByEmail(email);
+            if (!loggedInUser.isUsingMfa()){
+                publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT_SUCCESS));
+            }
+            return loggedInUser;
+        } catch (Exception exception) {
+            publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT_FAILURE));
+            processError(response, exception);
+            throw new ApiException(exception.getMessage());
+        }
     }
 }

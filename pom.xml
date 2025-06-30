@@ -85,6 +85,11 @@
             <artifactId>java-jwt</artifactId>
             <version>4.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>nl.basjes.parse.useragent</groupId>
+            <artifactId>yauaa</artifactId>
+            <version>7.31.0</version>
+        </dependency>
     </dependencies>
 
     <profiles>

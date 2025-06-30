@@ -10,6 +10,7 @@ import com.mehin.invoiceapp.repository.UserRepository;
 import com.mehin.invoiceapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +71,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUserRole(Long id, String roleName) {
         roleRepository.updateUserRole(id, roleName);
+    }
+
+    @Override
+    public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
+        userRepository.updateAccountSettings(userId, enabled, notLocked);
+    }
+
+    @Override
+    public void updateImage(UserDTO user, MultipartFile image) {
+        userRepository.updateImage(user, image);
     }
 
 

@@ -23,14 +23,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.mehin.invoiceapp.enumeration.RoleType.ROLE_USER;
 import static com.mehin.invoiceapp.enumeration.VerificationType.ACCOUNT;
 import static com.mehin.invoiceapp.enumeration.VerificationType.PASSWORD;
 import static com.mehin.invoiceapp.query.UserQuery.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -76,8 +82,6 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 
     }
-
-
 
     @Override
     public Collection<User> list(int page, int pageSize) {
@@ -266,6 +270,48 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             log.error(exception.getMessage());
             throw new ApiException("An error occurred. Please try again.");
         }
+    }
+
+    @Override
+    public void updateAccountSettings(Long userId, Boolean enabled, Boolean notLocked) {
+        try {
+            jdbc.update(UPDATE_USER_ACCOUNT_SETTINGS_QUERY, of("enabled", enabled, "userId", userId, "notLocked", notLocked));
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occurred. Please try again.");
+        }
+    }
+
+    @Override
+    public void updateImage(UserDTO user, MultipartFile image) {
+        String userImageUrl = setUserImageUrl(user.getEmail());
+       // user.setImageUrl(userImageUrl);
+        saveImage(user.getEmail(), image);
+        jdbc.update(UPDATE_USER_IMAGE_QUERY, of("imageUrl", userImageUrl, "userId", user.getId()));
+    }
+
+    private void saveImage(String email, MultipartFile image) {
+        Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/Downloads/images/").toAbsolutePath().normalize();
+        if (!Files.exists(fileStorageLocation)) {
+            try {
+                Files.createDirectories(fileStorageLocation);
+            } catch (Exception exception) {
+                log.error(exception.getMessage());
+                throw new ApiException("Unable to create directory.");
+            }
+            log.info("Created image at: {}", fileStorageLocation);
+        }
+        try {
+            Files.copy(image.getInputStream(), fileStorageLocation.resolve(email + ".png"), REPLACE_EXISTING);
+        } catch (IOException exception) {
+            throw new ApiException(exception.getMessage());
+        }
+
+        log.info("Saved image at: {}", fileStorageLocation);
+    }
+
+    private String setUserImageUrl(String email) {
+       return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/" + email + ".png").toUriString();
     }
 
 }
