@@ -2,8 +2,10 @@ package com.mehin.invoiceapp.service.implementation;
 
 import com.mehin.invoiceapp.domain.Customer;
 import com.mehin.invoiceapp.domain.Invoice;
+import com.mehin.invoiceapp.domain.Stats;
 import com.mehin.invoiceapp.repository.CustomerRepository;
 import com.mehin.invoiceapp.repository.InvoiceRepository;
+import com.mehin.invoiceapp.rowmapper.StatsRowMapper;
 import com.mehin.invoiceapp.service.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Map;
+
+import static com.mehin.invoiceapp.query.CustomerQuery.*;
 
 @Service
 @Transactional
@@ -23,6 +29,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final InvoiceRepository invoiceRepository;
+    private final NamedParameterJdbcTemplate jdbc;
 
     // Customer methods
 
@@ -82,6 +89,11 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Invoice getInvoice(Long id) {
         return invoiceRepository.findById(id).get();
+    }
+
+    @Override
+    public Stats getStats() {
+        return jdbc.queryForObject(STATS_QUERY, Map.of(), new StatsRowMapper());
     }
 
 

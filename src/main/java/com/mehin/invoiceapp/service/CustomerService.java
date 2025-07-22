@@ -2,6 +2,7 @@ package com.mehin.invoiceapp.service;
 
 import com.mehin.invoiceapp.domain.Customer;
 import com.mehin.invoiceapp.domain.Invoice;
+import com.mehin.invoiceapp.domain.Stats;
 import com.mehin.invoiceapp.dto.UserDTO;
 import org.springframework.data.domain.Page;
 
@@ -21,4 +22,6 @@ public interface CustomerService {
     Page<Invoice> getInvoices(int page, int size);
     void addInvoiceToCustomer(Long id, Invoice invoice);
     Invoice getInvoice(Long id);
+
+    Stats getStats();
 }

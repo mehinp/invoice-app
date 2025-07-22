@@ -33,7 +33,8 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user", userService.getUserByEmail(user.getEmail()),
-                                "customers", customerService.getCustomers(page.orElse(0), size.orElse(10))))
+                                "page", customerService.getCustomers(page.orElse(0), size.orElse(10)),
+                        "stats", customerService.getStats()))
                         .message("Customers retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -71,7 +72,7 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user", userService.getUserByEmail(user.getEmail()),
-                                "customer", customerService.searchCustomers(name.orElse(""), page.orElse(0), size.orElse(10))))
+                                "page", customerService.searchCustomers(name.orElse(""), page.orElse(0), size.orElse(10))))
                         .message("Customers retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -104,13 +105,13 @@ public class CustomerResource {
                         .build());
     }
 
-    @PostMapping("/invoice/new")
+    @GetMapping("/invoice/new")
     public ResponseEntity<HttpResponse> newInvoice(@AuthenticationPrincipal UserDTO user) {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user", userService.getUserByEmail(user.getEmail()),
-                                "customer", customerService.getCustomers()))
+                                "customers", customerService.getCustomers()))
                         .message("Customers retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -123,7 +124,7 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user", userService.getUserByEmail(user.getEmail()),
-                                "customers", customerService.getInvoices(page.orElse(0), size.orElse(10))))
+                                "page", customerService.getInvoices(page.orElse(0), size.orElse(10))))
                         .message("Invoices retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -132,10 +133,11 @@ public class CustomerResource {
 
     @GetMapping("/invoice/get/{id}")
     public ResponseEntity<HttpResponse> getInvoice(@AuthenticationPrincipal UserDTO user, @PathVariable("id") Long id) {
+        Invoice invoice = customerService.getInvoice(id);
         return ResponseEntity.ok(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userService.getUserByEmail(user.getEmail()), "customer", customerService.getInvoice(id)))
+                        .data(of("user", userService.getUserByEmail(user.getEmail()), "invoice", invoice,"customer", invoice.getCustomer()))
                         .message("Invoice " + customerService.getInvoice(id).getInvoiceNumber() + " retrieved.")
                         .status(OK)
                         .statusCode(OK.value())
@@ -149,8 +151,8 @@ public class CustomerResource {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user", userService.getUserByEmail(user.getEmail()),
-                                "customer", customerService.getCustomers()))
-                        .message("Invoice added to customer.")
+                                "customers", customerService.getCustomers()))
+                        .message(String.format("Invoice added to customer with ID #" + id))
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
