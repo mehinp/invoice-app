@@ -4,9 +4,14 @@ import com.mehin.invoiceapp.domain.Customer;
 import com.mehin.invoiceapp.domain.HttpResponse;
 import com.mehin.invoiceapp.domain.Invoice;
 import com.mehin.invoiceapp.dto.UserDTO;
+import com.mehin.invoiceapp.report.CustomerReport;
 import com.mehin.invoiceapp.service.CustomerService;
 import com.mehin.invoiceapp.service.UserService;
+import com.twilio.http.Response;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +23,8 @@ import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.*;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -158,5 +165,16 @@ public class CustomerResource {
                         .build());
     }
 
+    @GetMapping("/download/report")
+    public ResponseEntity<Resource> downloadReport(){
+        List<Customer> customers = new ArrayList<>();
+        customerService.getCustomers().iterator().forEachRemaining(customers::add);
+        CustomerReport report = new CustomerReport(customers);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("File-Name", "customer-report.xlsx");
+        headers.add("Content-Disposition", "attachment;File-Name=customer-report.xlsx");
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+                .headers(headers).body(report.export());
+    }
 
 }
