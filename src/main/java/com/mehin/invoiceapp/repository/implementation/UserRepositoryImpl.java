@@ -4,11 +4,15 @@ import com.mehin.invoiceapp.domain.Role;
 import com.mehin.invoiceapp.domain.User;
 import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
+import com.mehin.invoiceapp.enumeration.VerificationType;
 import com.mehin.invoiceapp.exception.ApiException;
 import com.mehin.invoiceapp.form.UpdateForm;
 import com.mehin.invoiceapp.repository.RoleRepository;
 import com.mehin.invoiceapp.repository.UserRepository;
 import com.mehin.invoiceapp.rowmapper.UserRowMapper;
+import com.mehin.invoiceapp.service.EmailService;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -31,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static com.mehin.invoiceapp.enumeration.RoleType.ROLE_USER;
 import static com.mehin.invoiceapp.enumeration.VerificationType.ACCOUNT;
@@ -50,6 +55,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
+    private final EmailService emailService;
 
     @Override
     public User create(User user) {
@@ -67,6 +73,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
             // Save URL in verification table
             jdbc.update(INSERT_VERIFICATION_URL_QUERY, of("userId", user.getId(), "url", verificationUrl));
+            sendEmail(user.getFirstName(), user.getEmail(), verificationUrl, ACCOUNT);
             // Send email to user with verification URL
            // emailService.sendVerificationUrl(user.getFirstName(), user.getEmail(), verificationUrl, ACCOUNT);
             user.setEnabled(false);
@@ -82,6 +89,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 
     }
+
 
     @Override
     public Collection<User> list(int page, int pageSize) {
@@ -177,7 +185,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
                 String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), PASSWORD.getType());
                 jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY, of("userId", user.getId()));
                 jdbc.update(INSERT_PASSWORD_VERIFICATION_QUERY, of("userId", user.getId(), "url", verificationUrl, "expirationDate", expirationDate));
-                // send email with url to user
+                sendEmail(user.getFirstName(), email, verificationUrl, PASSWORD);
                 log.info("Verification URL: {}", verificationUrl);
         } catch (Exception exception) {
             log.error(exception.getMessage());
@@ -324,6 +332,10 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
     private String setUserImageUrl(String email) {
        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/" + email + ".png").toUriString();
+    }
+
+    private void sendEmail(String firstName, String email, String verificationUrl, VerificationType verificationType) {
+        CompletableFuture.runAsync(() -> emailService.sendVerificationEmail(firstName, email, verificationUrl, verificationType));
     }
 
 }
