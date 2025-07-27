@@ -7,10 +7,7 @@ import com.mehin.invoiceapp.domain.UserPrincipal;
 import com.mehin.invoiceapp.dto.UserDTO;
 import com.mehin.invoiceapp.event.NewUserEvent;
 import com.mehin.invoiceapp.exception.ApiException;
-import com.mehin.invoiceapp.form.LoginForm;
-import com.mehin.invoiceapp.form.SettingsForm;
-import com.mehin.invoiceapp.form.UpdateForm;
-import com.mehin.invoiceapp.form.UpdatePasswordForm;
+import com.mehin.invoiceapp.form.*;
 import com.mehin.invoiceapp.provider.TokenProvider;
 import com.mehin.invoiceapp.repository.UserRepository;
 import com.mehin.invoiceapp.service.EventService;
@@ -33,6 +30,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mehin.invoiceapp.dtomapper.UserDTOMapper.toUser;
 import static com.mehin.invoiceapp.filter.CustomAuthorizationFilter.TOKEN_PREFIX;
@@ -69,13 +67,14 @@ public class UserResource {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user) {
+    public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(2);
         UserDTO userDto = userService.createUser(user);
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(Map.of("user", userDto))
-                        .message("User created")
+                        .message("Thank you " + userDto.getFirstName() + "! Your account has been created.")
                         .status(CREATED)
                         .statusCode(CREATED.value())
                         .build()
@@ -138,8 +137,23 @@ public class UserResource {
         );
     }
 
+    @GetMapping("/verify/account/{key}")
+    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable ("key") String key) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(2);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message(userService.verifyAccountKey(key).isEnabled() ? "Account already verified." : "Account verified.")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build()
+        );
+    }
+
+
     @GetMapping("/verify/password/{key}")
-    public ResponseEntity<HttpResponse> verifyPasswordUrl(@PathVariable ("key") String key) {
+    public ResponseEntity<HttpResponse> verifyPasswordUrl(@PathVariable ("key") String key) throws InterruptedException{
+        TimeUnit.SECONDS.sleep(2);
         UserDTO user = userService.verifyPasswordKey(key);
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
@@ -152,10 +166,10 @@ public class UserResource {
         );
     }
 
-    @PostMapping("/resetpassword/{key}/{newPassword}/{confirmPassword}")
-    public ResponseEntity<HttpResponse> resetPasswordWithKey(@PathVariable ("key") String key, @PathVariable ("newPassword") String newPassword,
-                                                          @PathVariable ("confirmPassword") String confirmPassword) {
-        userService.renewPassword(key, newPassword, confirmPassword);
+    @PutMapping("/new/password")
+    public ResponseEntity<HttpResponse> resetPasswordWithKey(@RequestBody @Valid NewPasswordForm newPasswordForm) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
+        userService.updatePassword(newPasswordForm.getUserId(), newPasswordForm.getNewPassword(), newPasswordForm.getConfirmPassword());
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -241,17 +255,6 @@ public class UserResource {
 
 
 
-    @GetMapping("/verify/account/{key}")
-    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable ("roleName") String key) {
-        return ResponseEntity.created(getUri()).body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .message(userService.verifyAccountKey(key).isEnabled() ? "Account already verified." : "Account verified.")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build()
-        );
-    }
 
     @GetMapping("/refresh/token")
     public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {

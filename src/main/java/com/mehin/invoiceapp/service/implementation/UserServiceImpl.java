@@ -44,9 +44,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void renewPassword(String key, String newPassword, String confirmPassword) {
-        userRepository.renewPassword(key, newPassword, confirmPassword);
+    public void updatePassword(Long userId, String newPassword, String confirmPassword) {
+        userRepository.renewPassword(userId, newPassword, confirmPassword);
     }
+
 
     @Override
     public UserDTO verifyAccountKey(String key) {

@@ -124,7 +124,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     }
 
     private String getVerificationUrl(String key, String type) {
-         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify" + type + "/" + key).toUriString();
+         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
     }
 
     @Override
@@ -220,6 +220,18 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         try {
             jdbc.update(UPDATE_USER_PASSWORD_BY_URL_QUERY, of("url", verificationUrl, "password", encoder.encode(newPassword)));
             jdbc.update(DELETE_VERIFICATION_BY_URL_QUERY, of("url", verificationUrl));
+        } catch (Exception exception){
+            log.error(exception.getMessage());
+            throw new ApiException("An error occurred. Please try again.");
+        }
+    }
+
+    @Override
+    public void renewPassword(Long userId, String newPassword, String confirmPassword) {
+        if(!newPassword.equals(confirmPassword)) throw new ApiException("Passwords do not match. Please try again.");
+        try {
+            jdbc.update(UPDATE_USER_PASSWORD_BY_USER_ID_QUERY, of("userId", userId, "password", encoder.encode(newPassword)));
+            jdbc.update(DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY, of("userId", userId));
         } catch (Exception exception){
             log.error(exception.getMessage());
             throw new ApiException("An error occurred. Please try again.");

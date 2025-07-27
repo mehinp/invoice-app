@@ -26,6 +26,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping(path="/customer")
@@ -166,7 +167,7 @@ public class CustomerResource {
     }
 
     @GetMapping("/download/report")
-    public ResponseEntity<Resource> downloadReport(){
+    public ResponseEntity<Resource> downloadReport() throws InterruptedException {
         List<Customer> customers = new ArrayList<>();
         customerService.getCustomers().iterator().forEachRemaining(customers::add);
         CustomerReport report = new CustomerReport(customers);
