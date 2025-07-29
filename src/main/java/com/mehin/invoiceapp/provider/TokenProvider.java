@@ -7,7 +7,7 @@ import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.mehin.invoiceapp.domain.UserPrincipal;
-import io.micrometer.common.util.StringUtils;
+import com.mehin.invoiceapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,16 +15,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import com.mehin.invoiceapp.service.UserService;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
+import static com.mehin.invoiceapp.constant.Constants.*;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -33,10 +32,7 @@ import static java.util.stream.Collectors.toList;
 @Component
 public class TokenProvider {
 
-    private static final String MEHIN_APPLICATION = "MEHIN_APPLICATION";
-    private static final String CUSTOMER_MANAGEMENT_SERVICE = "CUSTOMER_MANAGEMENT_SERVICE";
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 432_000_000;
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME =  864_000_000; //432_000_000;
+   //432_000_000;
     @Value("${jwt.secret}")
     private String secret;
     private final UserService userService;

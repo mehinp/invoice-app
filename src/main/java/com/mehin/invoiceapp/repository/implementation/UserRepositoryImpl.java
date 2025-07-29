@@ -46,12 +46,12 @@ import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
+import static com.mehin.invoiceapp.constant.Constants.DATE_FORMAT;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
-    private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
@@ -144,7 +144,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
         } else {
             log.info("User found in the database: {}", email);
-            return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()).getPermission() );
+            return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()));
         }
     }
 

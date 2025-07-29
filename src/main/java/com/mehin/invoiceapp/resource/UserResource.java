@@ -32,17 +32,16 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.mehin.invoiceapp.constant.Constants.TOKEN_PREFIX;
 import static com.mehin.invoiceapp.dtomapper.UserDTOMapper.toUser;
-import static com.mehin.invoiceapp.filter.CustomAuthorizationFilter.TOKEN_PREFIX;
+import static com.mehin.invoiceapp.enumeration.EventType.*;
 import static com.mehin.invoiceapp.utils.ExceptionUtils.processError;
 import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser;
-import static com.mehin.invoiceapp.utils.UserUtils.getAuthenticatedUser1;
 import static java.time.LocalDateTime.now;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated;
-import static com.mehin.invoiceapp.enumeration.EventType.*;
 
 
 @RestController
@@ -298,14 +297,14 @@ public class UserResource {
                         .timeStamp(now().toString())
                         .data(Map.of("user", user, "access_token", tokenProvider.createAccessToken(getUserPrincipal(user)),
                                         "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(user))))
-                        .message("Login Successful")
+                        .message("Login successful.")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
     }
 
     private UserPrincipal getUserPrincipal(UserDTO user) {
-        return new UserPrincipal(toUser(userService.getUserByEmail(user.getEmail())), roleService.getRoleByUserId(user.getId()).getPermission());
+        return new UserPrincipal(toUser(userService.getUserByEmail(user.getEmail())), roleService.getRoleByUserId(user.getId()));
     }
 
 
@@ -325,8 +324,9 @@ public class UserResource {
     }
 
     private UserDTO authenticate(String email, String password) {
+        UserDTO userByEmail = userService.getUserByEmail(email);
         try {
-            if (userService.getUserByEmail(email) != null) {
+            if (userByEmail != null) {
                 publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT));
             }
             authenticationManager.authenticate(unauthenticated(email, password));
@@ -336,7 +336,9 @@ public class UserResource {
             }
             return loggedInUser;
         } catch (Exception exception) {
-            publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT_FAILURE));
+            if (null != userByEmail) {
+                publisher.publishEvent(new NewUserEvent(email, LOGIN_ATTEMPT_FAILURE));
+            }
             processError(response, exception);
             throw new ApiException(exception.getMessage());
         }

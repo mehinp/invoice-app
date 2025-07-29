@@ -4,13 +4,11 @@ import com.mehin.invoiceapp.filter.CustomAuthorizationFilter;
 import com.mehin.invoiceapp.handler.CustomAccessDeniedHandler;
 import com.mehin.invoiceapp.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static com.mehin.invoiceapp.constant.Constants.PUBLIC_URLS;
+
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -31,16 +31,6 @@ public class SecurityConfig {
 
     private final BCryptPasswordEncoder encoder;
     // Fixed: Changed from /** to ** to match both /user/login and /user/login/**
-    private static final String[] PUBLIC_URLS = {
-            "/user/login/**",
-            "/user/register/**",
-            "/user/resetpassword/**",
-            "/user/verify/password/**",
-            "/user/verify/account/**",
-            "/user/refresh/token**",
-            "/user/image/**",
-            "/user/new/password"
-    };
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;

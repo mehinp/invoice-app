@@ -4,9 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import nl.basjes.parse.useragent.UserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
+import static com.mehin.invoiceapp.constant.Constants.USER_AGENT;
+import static com.mehin.invoiceapp.constant.Constants.X_FORWARDED_FOR;
+
 public class RequestUtils {
-    protected static final String X_FORWARDED_FOR = "X-Forwarded-For";
-    protected static final String USER_AGENT = "user-agent";
 
     public static String getIpAddress(HttpServletRequest request) {
         String ipAddress = "Unknown ip";
