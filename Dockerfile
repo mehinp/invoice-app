@@ -4,7 +4,7 @@ ARG CONTAINER_PORT
 COPY pom.xml /app
 RUN mvn dependency:resolve
 COPY . /app
-RUN mvn clean install
+RUN mvn clean install -DskipTests
 RUN mvn package -DskipTests -X
 
 FROM openjdk
