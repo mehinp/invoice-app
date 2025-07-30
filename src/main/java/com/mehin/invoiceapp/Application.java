@@ -32,7 +32,9 @@ public class Application {
         config.setAllowedOrigins(asList(
                 "http://localhost:4200",
                 "http://localhost:3000",
-                "http://invoiceapp.org"
+                "http://invoiceapp.org",
+                "http://192.168.1.237/"
+
         ));
         config.setAllowedHeaders(asList(
                 "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",

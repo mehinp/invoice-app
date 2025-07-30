@@ -1,11 +1,11 @@
 services:
-  invoiceapp:
-    container_name: invoiceappcontainer
+  invoice-app-backend:
+    container_name: invoice-app-backend-container
     build:
       context: .
       args:
         CONTAINER_PORT: ${CONTAINER_PORT}
-    image: invoiceapp:v1
+    image: invoice-app-backend:v1
     restart: unless-stopped
     env_file:
       - ${ENV_FILE}
