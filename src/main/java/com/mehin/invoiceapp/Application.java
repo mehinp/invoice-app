@@ -33,7 +33,8 @@ public class Application {
                 "http://localhost:4200",
                 "http://localhost:3000",
                 "http://invoiceapp.org",
-                "http://192.168.1.237/"
+                "http://192.168.1.237/",
+                "http://143.215.104.239/"
 
         ));
         config.setAllowedHeaders(asList(
