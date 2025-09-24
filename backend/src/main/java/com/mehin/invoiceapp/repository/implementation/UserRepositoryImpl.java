@@ -56,6 +56,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
     private final EmailService emailService;
+    private static final String BASE_URL = "http://3.149.166.152";
 
     @Override
     public User create(User user) {
@@ -132,7 +133,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     }
 
     private String getVerificationUrl(String key, String type) {
-         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
+         return BASE_URL + "/user/verify/" + type + "/" + key;
     }
 
     @Override
