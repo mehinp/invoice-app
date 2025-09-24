@@ -1,0 +1,6 @@
+.email-auto-shrink {
+    display: inline-block;
+    font-size: clamp(10px, 2vw, 14px);
+    max-width: 100%;
+    word-break: break-all;
+  }

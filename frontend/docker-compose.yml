@@ -1,0 +1,14 @@
+services:
+  invoice-app-frontend:
+    container_name: invoice-app-frontend-container
+    build: .
+    image: invoice-app-frontend:v1
+    ports:
+     - 80:80
+    networks:
+     - internalnet
+    restart: unless-stopped
+    
+networks:
+  internalnet:
+    driver: bridge
